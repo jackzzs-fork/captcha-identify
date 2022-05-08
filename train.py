@@ -14,12 +14,12 @@ import settings
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 # Hyper Parameters
-num_epochs = 300
-batch_size = 20
+num_epochs = 50
+batch_size = 1024
 learning_rate = 0.001
 
 # device = torch_util.select_device()
-device = torch.device("cpu")
+device = torch.device("cuda")
 
 def main(args):
     cnn = CNN().to(device)
@@ -33,11 +33,11 @@ def main(args):
 
     max_acc = 0
     # Train the Model
-    train_dataloader = datasets.get_train_data_loader()
+    train_dataloader = datasets.get_train_data_loader(batch_size)
     for epoch in range(num_epochs):
         for i, (images, labels) in enumerate(train_dataloader):
-            images = Variable(images)
-            labels = Variable(labels.float())
+            images = Variable(images).to(device)
+            labels = Variable(labels.float()).to(device)
             predict_labels = cnn(images)
             loss = criterion(predict_labels, labels)
             optimizer.zero_grad()
@@ -53,6 +53,8 @@ def main(args):
             print("update accuracy %.5f." % acc)
             max_acc = acc
             shutil.copy("./weights/cnn_%03g.pt" % epoch, "./weights/cnn_best.pt")
+            with open('results.txt', 'a+') as f:
+                f.write(f'{epoch},{acc}\n')
         else:
             print("do not update %.5f." % acc)
         
